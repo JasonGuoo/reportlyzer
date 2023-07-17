@@ -12,3 +12,4 @@ docs/_build/
 build/
 dist/
 venv/
+.DS_Store

@@ -9,32 +9,32 @@ from flask import redirect
 from flask import request
 from flask import session
 
-from .config import COOKIE_DURATION
-from .config import COOKIE_HTTPONLY
-from .config import COOKIE_NAME
-from .config import COOKIE_SAMESITE
-from .config import COOKIE_SECURE
-from .config import ID_ATTRIBUTE
-from .config import LOGIN_MESSAGE
-from .config import LOGIN_MESSAGE_CATEGORY
-from .config import REFRESH_MESSAGE
-from .config import REFRESH_MESSAGE_CATEGORY
-from .config import SESSION_KEYS
-from .config import USE_SESSION_FOR_NEXT
-from .mixins import AnonymousUserMixin
-from .signals import session_protected
-from .signals import user_accessed
-from .signals import user_loaded_from_cookie
-from .signals import user_loaded_from_request
-from .signals import user_needs_refresh
-from .signals import user_unauthorized
-from .utils import _create_identifier
-from .utils import _user_context_processor
-from .utils import decode_cookie
-from .utils import encode_cookie
-from .utils import expand_login_view
-from .utils import login_url as make_login_url
-from .utils import make_next_param
+from config import COOKIE_DURATION
+from config import COOKIE_HTTPONLY
+from config import COOKIE_NAME
+from config import COOKIE_SAMESITE
+from config import COOKIE_SECURE
+from config import ID_ATTRIBUTE
+from config import LOGIN_MESSAGE
+from config import LOGIN_MESSAGE_CATEGORY
+from config import REFRESH_MESSAGE
+from config import REFRESH_MESSAGE_CATEGORY
+from config import SESSION_KEYS
+from config import USE_SESSION_FOR_NEXT
+from mixins import AnonymousUserMixin
+from signals import session_protected
+from signals import user_accessed
+from signals import user_loaded_from_cookie
+from signals import user_loaded_from_request
+from signals import user_needs_refresh
+from signals import user_unauthorized
+from utils import _create_identifier
+from utils import _user_context_processor
+from utils import decode_cookie
+from utils import encode_cookie
+from utils import expand_login_view
+from utils import login_url as make_login_url
+from utils import make_next_param
 
 
 class LoginManager:

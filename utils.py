@@ -14,11 +14,11 @@ from werkzeug.local import LocalProxy
 from werkzeug.urls import url_decode
 from werkzeug.urls import url_encode
 
-from .config import COOKIE_NAME
-from .config import EXEMPT_METHODS
-from .signals import user_logged_in
-from .signals import user_logged_out
-from .signals import user_login_confirmed
+from config import COOKIE_NAME
+from config import EXEMPT_METHODS
+from signals import user_logged_in
+from signals import user_logged_out
+from signals import user_login_confirmed
 
 #: A proxy for the current user. If no user is logged in, this will be an
 #: anonymous user
