@@ -4,19 +4,8 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, curren
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
+from models import db, app, User, Role, RoleUsers, login_manager
 
-# load envs from .env file
-load_dotenv()
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL") 
-app.config['SECRET_KEY'] = 'N2G4Zx27gMqLX8j3ys1IcV8Q'
-
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-
-from models import User, Role
 
 @login_manager.user_loader
 def load_user(user_id):

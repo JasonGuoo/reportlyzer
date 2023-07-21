@@ -7,8 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app import db, app
-from models import User, Role, RoleUsers
+from models import db,app, User, Role, RoleUsers
 
 
 
