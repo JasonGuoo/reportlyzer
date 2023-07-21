@@ -1,4 +1,10 @@
+# load envs from .env file
+from dotenv import load_dotenv
+import os
 from datetime import timedelta
+
+load_dotenv()
+
 
 #: The default name of the "remember me" cookie (``remember_token``)
 COOKIE_NAME = "remember_token"
