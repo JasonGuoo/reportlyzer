@@ -5,7 +5,7 @@ from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 import os
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
-from .App import db, app, login_manager
+from App import db, app, login_manager
 
 class User(db.Model, UserMixin):
     __tablename__ = "users"
