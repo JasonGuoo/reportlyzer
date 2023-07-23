@@ -38,7 +38,7 @@ def logout():
 @app.route('/')
 @login_required
 def index():
-    return render_template('layout-sidenav-light.html')
+    return render_template('reports.html')
 
 @app.route('/index')
 @login_required
