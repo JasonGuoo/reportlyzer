@@ -108,7 +108,7 @@ def edit_user(user_id):
     return render_template('edit_user.html', user=user)
 
 @app.route('/')
-# @login_required
+@login_required
 def index():
     return render_template('reports.html')
 
