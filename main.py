@@ -35,10 +35,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route('/')
-@login_required
-def index():
-    return render_template('reports.html')
+
 
 @app.route('/index')
 @login_required
@@ -109,6 +106,11 @@ def edit_user(user_id):
         return redirect(url_for('users'))
 
     return render_template('edit_user.html', user=user)
+
+@app.route('/')
+# @login_required
+def index():
+    return render_template('reports.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
