@@ -1,7 +1,10 @@
 import os
 from azure.storage.blob import BlobServiceClient 
 import boto3
+from config import AZURE_DOC_CONTAINER, AZURE_INDEX_CONTAINER, DOC_BASE_PATH, DOC_INDEX_PATH, S3_DOC_BUCKET, S3_INDEX_BUCKET
 from models.documents import Document
+import config
+
 
 class FileStorage:
     
@@ -13,8 +16,8 @@ class FileStorage:
         
 class LocalStorage(FileStorage):
 
-    def __init__(self):
-        self.base_path = os.environ['FILE_BASE_PATH']
+    def __init__(self, base_path:str):
+        self.base_path = base_path
 
     def get(self, file_id, file_type):
         file_path = f'{self.base_path}/{file_id}.{file_type}'
@@ -25,8 +28,8 @@ class LocalStorage(FileStorage):
         
 class S3Storage(FileStorage):
 
-    def __init__(self):
-        self.bucket = os.environ['S3_BUCKET'] 
+    def __init__(self, base_bucket):
+        self.bucket = base_bucket 
         self.s3 = boto3.client('s3')
 
     def get(self, file_id, file_type):
@@ -38,8 +41,8 @@ class S3Storage(FileStorage):
         
 class AzureStorage(FileStorage):
 
-    def __init__(self):
-        self.container = os.environ['AZURE_CONTAINER']
+    def __init__(self, container):
+        self.container = container
         self.client = BlobServiceClient.from_connection_string(os.environ['AZURE_CONN_STR'])
 
     def get(self, file_id, file_type):
@@ -71,3 +74,35 @@ def usageExample(doc_id):
         pass
     # do something with doc
     pass
+
+
+
+# factory method for get storage instaces for doc and index, by type, and by using the different base
+# path, base s3 bucket and azure container.
+
+def get_doc_storage(storage_type='local'):
+    if storage_type == 'local':
+        return LocalStorage(DOC_BASE_PATH)
+    elif storage_type == 's3':
+        return S3Storage(S3_DOC_BUCKET)
+    elif storage_type == 'azure':
+        return AzureStorage(AZURE_DOC_CONTAINER)
+    else:
+        raise ValueError(f'Unknown storage type: {storage_type}')
+    
+
+def get_index_storage(storage_type='local'):
+    if storage_type == 'local':
+        return LocalStorage(DOC_INDEX_PATH)
+    elif storage_type == 's3':
+        return S3Storage(S3_INDEX_BUCKET)
+    elif storage_type == 'azure':
+        return AzureStorage(AZURE_INDEX_CONTAINER)
+    else:
+        raise ValueError(f'Unknown storage type: {storage_type}')
+
+def get_doc_storage_default():
+    return get_doc_storage(config.DEFAULT_DOC_STORAGE)
+
+def get_index_storage_default():
+    return get_index_storage(config.DEFAULT_INDEX_STORAGE)

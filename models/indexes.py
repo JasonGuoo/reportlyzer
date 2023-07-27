@@ -1,22 +1,18 @@
 import os
-from storage import FileStorage, LocalStorage, S3Storage, AzureStorage 
+from storage import FileStorage, LocalStorage, S3Storage, AzureStorage , FileReader, get_doc_storage, get_index_storage
 from app import app, db
+import config
 
 class Index(db.Model):
 
   document_id = db.Column(db.Integer, db.ForeignKey('documents.id'))
   document = db.relationship('Document', backref='indexes')
 
-  storage_type = db.Column(db.String, default=os.getenv('DEFAULT_INDEX_STORAGE', 'local'))
+  storage_type = db.Column(db.String, default=config.DEFAULT_INDEX_STORAGE)
   
   @property
   def storage(self):
-    if self.storage_type == 'local':
-      return LocalStorage()
-    elif self.storage_type == 's3':
-      return S3Storage()
-    elif self.storage_type == 'azure':
-      return AzureStorage()
+    return get_doc_storage(self.storage_type)
 
   embedding_method = db.Column(db.String, default='tfidf')
 
