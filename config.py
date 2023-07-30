@@ -1,6 +1,6 @@
 # load envs from .env file
 from dotenv import load_dotenv
-import os
+import os, logging
 from datetime import timedelta
 
 load_dotenv()
@@ -8,21 +8,25 @@ load_dotenv()
 import configparser
 
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read("config.ini")
 
-doc_path = config['paths']['doc_base_path']
+doc_path = config["paths"]["doc_base_path"]
 
-paths = config['paths']
-DOC_BASE_PATH = paths['DOC_BASE_PATH']
-S3_DOC_BUCKET = paths['S3_DOC_BUCKET']
-AZURE_DOC_CONTAINER = paths['AZURE_DOC_CONTAINER']
+paths = config["paths"]
+DOC_BASE_PATH = paths["DOC_BASE_PATH"]
+S3_DOC_BUCKET = paths["S3_DOC_BUCKET"]
+AZURE_DOC_CONTAINER = paths["AZURE_DOC_CONTAINER"]
 
-DOC_INDEX_PATH = paths['DOC_INDEX_PATH']
-S3_INDEX_BUCKET = paths['S3_INDEX_BUCKET']
-AZURE_INDEX_CONTAINER = paths['AZURE_INDEX_CONTAINER']
+DOC_INDEX_PATH = paths["DOC_INDEX_PATH"]
+S3_INDEX_BUCKET = paths["S3_INDEX_BUCKET"]
+AZURE_INDEX_CONTAINER = paths["AZURE_INDEX_CONTAINER"]
 
-DEFAULT_DOC_STORAGE = paths['DEFAULT_DOC_STORAGE']
-DEFAULT_INDEX_STORAGE = paths['DEFAULT_INDEX_STORAGE']
+DEFAULT_DOC_STORAGE = paths["DEFAULT_DOC_STORAGE"]
+DEFAULT_INDEX_STORAGE = paths["DEFAULT_INDEX_STORAGE"]
+
+LOGGING_LEVEL = config["logging"]["LOGGING_LEVEL"]
+
+logging.basicConfig(level=LOGGING_LEVEL)
 
 
 #: The default name of the "remember me" cookie (``remember_token``)

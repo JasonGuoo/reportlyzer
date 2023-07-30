@@ -1,7 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from app import db, app
-from .storage import FileStorage, LocalStorage, S3Storage, AzureStorage, FileReader
+from .storage import FileStorage, LocalStorage, S3Storage, AzureStorage
 
 DOCUMENT_TYPE_DOCUMENT = "document"
 DOCUMENT_TYPE_INDEX = "index"
@@ -15,7 +16,8 @@ DOCUMENT_PROPERTY_CHECKSUM_TYPE = "checksum_type"
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(String(2096))
-    properties = db.Column(JSON)
+    properties = db.Column(JSONB)
+    tags = db.Column(JSONB)
     create_date = db.Column(DateTime())
     type = Column(String(100))
     storage_type = db.Column(db.String(20))
@@ -29,19 +31,6 @@ class Document(db.Model):
             return S3Storage()
         elif self.storage_type == "azure":
             return AzureStorage()
-
-
-# Tag for tagging the documents, will be used in search
-class Tag(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, unique=True)
-    properties = db.Column(JSON)
-
-
-# Document Tag class to store the document tag info in the postgresql database
-class DocumentTag(db.Model):
-    document_id = db.Column(db.Integer, db.ForeignKey("documents.id"), primary_key=True)
-    tag_id = db.Column(db.Integer, db.ForeignKey("tags.id"), primary_key=True)
 
 
 # Store which user has access to which document
