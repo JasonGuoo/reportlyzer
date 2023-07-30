@@ -1,108 +1,207 @@
+import hashlib
 import os
-from azure.storage.blob import BlobServiceClient 
+from azure.storage.blob import BlobServiceClient
 import boto3
-from config import AZURE_DOC_CONTAINER, AZURE_INDEX_CONTAINER, DOC_BASE_PATH, DOC_INDEX_PATH, S3_DOC_BUCKET, S3_INDEX_BUCKET
+from botocore.exceptions import ClientError
+
+from config import (
+    AZURE_DOC_CONTAINER,
+    AZURE_INDEX_CONTAINER,
+    DOC_BASE_PATH,
+    DOC_INDEX_PATH,
+    S3_DOC_BUCKET,
+    S3_INDEX_BUCKET,
+)
 from models.documents import Document
 import config
+from models.tools import get_file_checksum
 
 
-class FileStorage:
-    
-    def get(self, file_id):
+class Storage:
+    def __init__(
+        self, file_id, file_type, file_ext, base_path=None, storage_type="local"
+    ):
+        self.file_id = file_id
+        self.file_ext = file_ext
+        self.file_type = file_type
+        self.storage_type = storage_type
+        self.checksum = None
+
+        if file_type == "document":
+            if self.storage_type == "local":
+                self.base_path = config.DOC_BASE_PATH
+            elif self.storage_type == "s3":
+                self.base_path = config.S3_DOC_BUCKET
+            elif self.storage_type == "azure":
+                self.base_path = config.AZURE_DOC_CONTAINER
+
+        elif file_type == "index":
+            if self.storage_type == "local":
+                self.base_path = config.INDEX_BASE_PATH
+            elif self.storage_type == "s3":
+                self.base_path = config.S3_INDEX_BUCKET
+            elif self.storage_type == "azure":
+                self.base_path = config.AZURE_INDEX_CONTAINER
+
+    def read(self):
         raise NotImplementedError
-    
-    def save(self, file_path):
+
+    def write(self, data):
         raise NotImplementedError
-        
-class LocalStorage(FileStorage):
 
-    def __init__(self, base_path:str):
-        self.base_path = base_path
+    def get_checksum(self):
+        raise NotImplementedError
 
-    def get(self, file_id, file_type):
-        file_path = f'{self.base_path}/{file_id}.{file_type}'
-        return FileReader(file_path)
 
-    def save(self, file_id, file_type, file_path='./'):
-        os.rename(file_path, f'{self.base_path}/{file_id}.{file_type}')
-        
-class S3Storage(FileStorage):
+class LocalStorage(Storage):
+    def read(self):
+        try:
+            path = f"{self.base_path}/{self.file_id}.{self.file_ext}"
+            with open(path, "rb") as f:
+                return f.read()
+        except FileNotFoundError:
+            print(f"Local file not found at {path}")
+        except Exception as e:
+            print("Error reading local file:", e)
 
-    def __init__(self, base_bucket):
-        self.bucket = base_bucket 
-        self.s3 = boto3.client('s3')
+    def write(self, data):
+        try:
+            path = f"{self.base_path}/{self.file_id}.{self.file_ext}"
+            with open(path, "wb") as f:
+                f.write(data)
+        except Exception as e:
+            print("Error writing local file:", e)
 
-    def get(self, file_id, file_type):
-        obj = self.s3.get_object(Bucket=self.bucket, Key=f'{file_id}.{file_type}')
-        return FileReader(obj['Body'])
+    def get_checksum(self):
+        if self.checksum is None:
+            path = f"{self.base_path}/{self.file_id}.{self.file_ext}"
+            self.checksum = get_file_checksum(path)
+        return self.checksum
 
-    def save(self, file_id, file_type, file_path='./'):
-        self.s3.upload_file(file_path, self.bucket, f'{file_id}.{file_type}')
-        
-class AzureStorage(FileStorage):
 
-    def __init__(self, container):
-        self.container = container
-        self.client = BlobServiceClient.from_connection_string(os.environ['AZURE_CONN_STR'])
+class S3Storage(Storage):
+    def __init__(self, file_id, file_type, file_ext):
+        super().__init__(file_id, file_type, file_ext)
+        self.s3 = boto3.client("s3")
 
-    def get(self, file_id, file_type):
-        blob = self.client.get_blob_client(self.container, f'{file_id}.{file_type}')
-        stream = blob.download_blob()
-        return FileReader(stream)
+        # Use base_path from parent class as bucket name
+        self.bucket = self.base_path
 
-    def save(self, file_path, file_id, file_type):
-        blob = self.client.get_blob_client(self.container, f'{file_id}.{file_type}')
-        with open(file_path, 'rb') as data:
+    def read(self):
+        try:
+            obj = self.s3.get_object(
+                Bucket=self.bucket, Key=f"{self.file_id}.{self.file_ext}"
+            )
+            return obj["Body"].read()
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                print("Object does not exist")
+            else:
+                print("Error getting object:", e)
+        except Exception as e:
+            print("Error reading from S3:", e)
+
+    def write(self, data):
+        try:
+            self.s3.put_object(
+                Body=data, Bucket=self.bucket, Key=f"{self.file_id}.{self.file_ext}"
+            )
+        except ClientError as e:
+            print("Error writing to S3:", e)
+        except Exception as e:
+            print("Error writing to S3:", e)
+
+    def get_checksum(self):
+        if self.checksum is None:
+            obj = self.s3.get_object(
+                Bucket=self.bucket, Key=f"{self.file_id}.{self.file_ext}"
+            )
+            data = obj["Body"].read()
+            self.checksum = hashlib.sha256(data).hexdigest()
+        return self.checksum
+
+
+class AzureStorage(Storage):
+    def __init__(self, file_id, file_type, file_ext):
+        super().__init__(file_id, file_type, file_ext)
+        self.container = self.base_path
+        self.conn_str = config.AZURE_CONN_STR
+
+    def read(self):
+        try:
+            blob = self.client.get_blob_client(
+                self.container, f"{self.file_id}.{self.file_ext}"
+            )
+            return blob.download_blob().readall()
+        except Exception as e:
+            print("Error reading Azure blob:", e)
+
+    def write(self, data):
+        try:
+            blob = self.client.get_blob_client(
+                self.container, f"{self.file_id}.{self.file_ext}"
+            )
             blob.upload_blob(data)
-            
-class FileReader:
+        except Exception as e:
+            print("Error writing Azure blob:", e)
 
-    def __init__(self, file_stream):
-        self.file_stream = file_stream
-
-    def __enter__(self):
-        return self.file_stream
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.file_stream.close()
-
-def usageExample(doc_id):
-    doc = Document.query.get(doc_id)
-    with doc.storage.get(doc.id) as file_stream:
-        # do something with file_stream
-        content = file_stream.read()
-        pass
-    # do something with doc
-    pass
-
+    def get_checksum(self):
+        if self.checksum is None:
+            blob = self.client.get_blob_client(
+                self.container, f"{self.file_id}.{self.file_ext}"
+            )
+            data = blob.download_blob()
+            self.checksum = hashlib.sha256(data.readall()).hexdigest()
+        return self.checksum
 
 
 # factory method for get storage instaces for doc and index, by type, and by using the different base
 # path, base s3 bucket and azure container.
 
-def get_doc_storage(storage_type='local'):
-    if storage_type == 'local':
-        return LocalStorage(DOC_BASE_PATH)
-    elif storage_type == 's3':
-        return S3Storage(S3_DOC_BUCKET)
-    elif storage_type == 'azure':
-        return AzureStorage(AZURE_DOC_CONTAINER)
+
+def get_storage(file_id, file_type, file_ext, base_path=None, storage_type="local"):
+    if storage_type == "local":
+        return LocalStorage(file_id, file_type, file_ext, base_path=None)
+    elif storage_type == "s3":
+        return S3Storage(
+            file_id,
+            file_type,
+            file_ext,
+            base_path=None,
+        )
+    elif storage_type == "azure":
+        return AzureStorage(
+            file_id,
+            file_type,
+            file_ext,
+            base_path=None,
+        )
     else:
-        raise ValueError(f'Unknown storage type: {storage_type}')
-    
+        raise ValueError(f"Unknown storage type: {storage_type}")
 
-def get_index_storage(storage_type='local'):
-    if storage_type == 'local':
-        return LocalStorage(DOC_INDEX_PATH)
-    elif storage_type == 's3':
-        return S3Storage(S3_INDEX_BUCKET)
-    elif storage_type == 'azure':
-        return AzureStorage(AZURE_INDEX_CONTAINER)
-    else:
-        raise ValueError(f'Unknown storage type: {storage_type}')
 
-def get_doc_storage_default():
-    return get_doc_storage(config.DEFAULT_DOC_STORAGE)
+# example code:
+# local_storage = LocalStorage('file1', 'document', 'txt')
 
-def get_index_storage_default():
-    return get_index_storage(config.DEFAULT_INDEX_STORAGE)
+# # Read
+# data = local_storage.read()
+
+# # Write
+# local_storage.write(b'Hello World!')
+
+# s3_storage = S3Storage('file2', 'index', 'json')
+
+# # Read
+# data = s3_storage.read()
+
+# # Write
+# s3_storage.write(b'{"name": "John"}')
+
+# azure_storage = AzureStorage('file3', 'document', 'pdf')
+
+# # Read
+# data = azure_storage.read()
+
+# # Write
+# with open('report.pdf', 'rb') as f:
+#   azure_storage.write(f.read())
