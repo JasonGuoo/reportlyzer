@@ -255,13 +255,3 @@ def get_user_documents_in_project(user_id, project_id, title_contains):
     )
 
     return documents
-
-
-def get_file_checksum(file_path):
-    # Open file in binary mode
-    with open(file_path, "rb") as f:
-        # Read contents of the file
-        data = f.read()
-
-        # Return SHA256 hash
-        return hashlib.sha256(data).hexdigest()
