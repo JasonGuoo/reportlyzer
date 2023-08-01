@@ -7,12 +7,30 @@ from datetime import datetime
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
-from models import User, Role, RoleUsers
+from models import (
+    User,
+    Role,
+    RoleUsers,
+    LoginLedger,
+    Document,
+    Project,
+    DocumentShare,
+    ProjectDocument,
+    Index,
+)
 
 
 def setup():
     # create the database
-    db.create_all()
+    db.metadata.create_all(
+        bind=db.engine,
+        tables=[
+            User.__table__,
+            Role.__table__,
+            RoleUsers.__table__,
+            LoginLedger.__table__,
+        ],
+    )
     # create admin role
     admin_role = Role(
         role_name="admin",
@@ -74,6 +92,13 @@ def setup():
     db.session.add(user_role_user)
 
     db.session.commit()
+
+    db.metadata.create_all(
+        bind=db.engine, tables=[Document.__table__, Project.__table__]
+    )
+    db.metadata.create_all(
+        bind=db.engine, tables=[DocumentShare.__table__, ProjectDocument.__table__]
+    )
 
     print("Database initialized!")
 

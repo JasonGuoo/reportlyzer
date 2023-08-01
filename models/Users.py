@@ -9,7 +9,6 @@ from app import db, app, login_manager
 
 
 class User(db.Model, UserMixin):
-    __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     username = Column(String(100), unique=True)
     password = Column(String(1000))
@@ -36,7 +35,6 @@ class User(db.Model, UserMixin):
 # The role class should have role id, role name, role description,
 # created at, updated at
 class Role(db.Model, UserMixin):
-    __tablename__ = "roles"
     id = Column(Integer, primary_key=True)
     role_name = Column(String(100), unique=True)
     role_description = Column(String(100))
@@ -56,7 +54,6 @@ class Role(db.Model, UserMixin):
 # create a RoleUsers class to store the role and user relationship
 # in the postgresql database
 class RoleUsers(db.Model, UserMixin):
-    __tablename__ = "role_users"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer)
     role_id = Column(Integer)
@@ -74,7 +71,6 @@ class RoleUsers(db.Model, UserMixin):
 
 
 class LoginLedger(db.Model, UserMixin):
-    __tablename__ = "login_ledger"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer)
     login_time = Column(DateTime())

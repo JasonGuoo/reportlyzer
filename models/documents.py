@@ -36,7 +36,7 @@ class Document(db.Model):
     tags = db.Column(JSONB)
     create_date = db.Column(DateTime())
     type = Column(String(100))
-    storage_type = db.Column(db.String(20))
+    storage_type = db.Column(db.String(20), default="local")
     file_type = db.Column(db.String(20), default="pdf")
 
     @property
@@ -52,17 +52,17 @@ class Document(db.Model):
 # Store which user has access to which document
 class DocumentShare(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    document_id = db.Column(db.Integer, db.ForeignKey("Document.id"))
-    user_id = db.Column(db.Integer, db.ForeignKey("User.id"))
-    user = db.relationship("User", backref="document_shares")
-    document = db.relationship("Document", backref="shared_with")
+    document_id = db.Column(
+        db.Integer, db.ForeignKey("document.id")
+    )  # the table name would be lower case, so the User model map to "user" table
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
 
 # Each user will have several projects, in each project, there will be several documents
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    owner_id = db.Column(db.Integer, db.ForeignKey("User.id"))
+    owner_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     create_date = db.Column(DateTime())
     update_date = db.Column(DateTime())
     is_deleted = db.Column(Boolean, default=False)
@@ -70,14 +70,14 @@ class Project(db.Model):
 
 
 class ProjectDocument(db.Model):
-    project_id = db.Column(db.Integer, db.ForeignKey("Project.id"), primary_key=True)
-    document_id = db.Column(db.Integer, db.ForeignKey("Document.id"), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"))
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"))
 
 
 class Index(db.Model):
     index_id = db.Column(db.Integer, primary_key=True)
-    document_id = db.Column(db.Integer, db.ForeignKey("Document.id"))
-    document = db.relationship("Document", backref="indexes")
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"))
 
     storage_type = db.Column(db.String, default=config.DEFAULT_INDEX_STORAGE)
     index_type = db.Column(db.String, default=INDEX_TYPE_PDF)
