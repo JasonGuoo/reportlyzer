@@ -1,6 +1,6 @@
 import config
 from models.users import User, Role, RoleUsers, LoginLedger
-from models.storage import get_storage, LocalStorage
+from models.documents import get_storage, LocalStorage
 from models.documents import (
     DocumentShare,
     Document,
@@ -11,7 +11,7 @@ import uuid, os, re, hashlib, datetime, json, logging
 import requests, requests.exceptions
 from urllib.parse import urlparse
 from app import db
-from documents import (
+from models.documents import (
     DOCUMENT_PROPERTY_URL,
     DOCUMENT_PROPERTY_BASE_URL,
     DOCUMENT_PROPERTY_CHUCKSUM,

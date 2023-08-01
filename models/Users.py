@@ -1,11 +1,12 @@
 # create User class, store the user info in the postgresql database
-# 
+#
 # Path: modules/Users.py
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 import os
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
-from App import db, app, login_manager
+from app import db, app, login_manager
+
 
 class User(db.Model, UserMixin):
     __tablename__ = "users"
@@ -30,10 +31,9 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return "<User {}>".format(self.username)
 
-    
 
 # Role class to store the role info in the postgresql database
-# The role class should have role id, role name, role description, 
+# The role class should have role id, role name, role description,
 # created at, updated at
 class Role(db.Model, UserMixin):
     __tablename__ = "roles"
@@ -72,6 +72,7 @@ class RoleUsers(db.Model, UserMixin):
     def __repr__(self):
         return "<RoleUsers {}>".format(self.user_id)
 
+
 class LoginLedger(db.Model, UserMixin):
     __tablename__ = "login_ledger"
     id = Column(Integer, primary_key=True)
@@ -82,7 +83,9 @@ class LoginLedger(db.Model, UserMixin):
     updated_at = Column(DateTime())
     ip_address = Column(String(100))
 
-    def __init__(self, user_id, login_time, logout_time, created_at, updated_at, ip_address):
+    def __init__(
+        self, user_id, login_time, logout_time, created_at, updated_at, ip_address
+    ):
         self.user_id = user_id
         self.login_time = login_time
         self.logout_time = logout_time

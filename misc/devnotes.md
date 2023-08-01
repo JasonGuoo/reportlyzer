@@ -27,3 +27,13 @@ Workaround #1: Install specifying the interpreter
 ~~~
 python -m pip --no-cache install psycopg2
 ~~~
+
+## Prompt engineering
+### generate tags for a news
+```
+Generate five tags, less than 3 words, and give numbers for the tags from this news:\n\n${news}
+```
+
+## LLM related
+### Define the model and the version in LLM
+https://clemenssiebler.com/posts/using-langchain-and-chatgpt-turbo-with-azure-openai-service/

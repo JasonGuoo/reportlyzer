@@ -4,8 +4,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 from app import db, app
 import hashlib, os
 from azure.storage.blob import BlobServiceClient
-import boto3
-from botocore.exceptions import ClientError
 from config import (
     AZURE_DOC_CONTAINER,
     AZURE_INDEX_CONTAINER,
@@ -14,9 +12,9 @@ from config import (
     S3_DOC_BUCKET,
     S3_INDEX_BUCKET,
 )
-from models.documents import Document
 import config
-from models.tools import get_file_checksum
+import boto3
+from botocore.exceptions import ClientError
 
 DOCUMENT_TYPE_DOCUMENT = "document"
 DOCUMENT_TYPE_INDEX = "index"
@@ -24,6 +22,10 @@ DOCUMENT_PROPERTY_URL = "url"
 DOCUMENT_PROPERTY_BASE_URL = "base_url"
 DOCUMENT_PROPERTY_CHUCKSUM = "checksum"
 DOCUMENT_PROPERTY_CHECKSUM_TYPE = "checksum_type"
+
+INDEX_TYPE_PDF = "INDEX_TYPE_PDF"
+INDEX_TYPE_IMAGE = "INDEX_TYPE_IMAGE"
+INDEX_TYPE_WEBPAGE = "INDEX_TYPE_WEBPAGE"
 
 
 # Document Type class to store the document type info in the postgresql database
@@ -50,15 +52,17 @@ class Document(db.Model):
 # Store which user has access to which document
 class DocumentShare(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    document_id = db.Column(db.Integer, db.ForeignKey("documents.id"))
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    document_id = db.Column(db.Integer, db.ForeignKey("Document.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("User.id"))
+    user = db.relationship("User", backref="document_shares")
+    document = db.relationship("Document", backref="shared_with")
 
 
 # Each user will have several projects, in each project, there will be several documents
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    owner_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    owner_id = db.Column(db.Integer, db.ForeignKey("User.id"))
     create_date = db.Column(DateTime())
     update_date = db.Column(DateTime())
     is_deleted = db.Column(Boolean, default=False)
@@ -66,23 +70,25 @@ class Project(db.Model):
 
 
 class ProjectDocument(db.Model):
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
-    document_id = db.Column(db.Integer, db.ForeignKey("documents.id"), primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("Project.id"), primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("Document.id"), primary_key=True)
 
 
 class Index(db.Model):
-    document_id = db.Column(db.Integer, db.ForeignKey("documents.id"))
+    index_id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("Document.id"))
     document = db.relationship("Document", backref="indexes")
 
     storage_type = db.Column(db.String, default=config.DEFAULT_INDEX_STORAGE)
+    index_type = db.Column(db.String, default=INDEX_TYPE_PDF)
+    index_extract_file_path = db.Column(db.String)
+    index_file_path = db.Column(db.String)
+    index_properties = db.Column(JSONB)
 
-    # @property
-    # def storage(self):
-    #     return get_doc_storage(self.storage_type)
-
-    embedding_method = db.Column(db.String, default="tfidf")
-
-    llm_model = db.Column(db.String, default="llama")
+    # embedding method and llm_model, default is using chatgpt-3.5
+    embedding_method = db.Column(db.String, default="text-embedding-ada-002")
+    embedding_model = db.Column(db.String, default="gpt-3.5-turbo-0613")
+    embedding_model_version = db.Column(db.String, default="2023-06-13")
 
     def build(self):
         # Index building logic:
