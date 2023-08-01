@@ -8,15 +8,16 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
 from models import (
-    User,
-    Role,
+    UserORM,
+    RoleORM,
     RoleUsers,
     LoginLedger,
-    Document,
-    Project,
+    IndexORM,
+    DocumentORM,
     DocumentShare,
+    ProjectORM,
     ProjectDocument,
-    Index,
+    IndexORM,
 )
 
 
@@ -29,14 +30,14 @@ def setup():
     db.metadata.create_all(
         bind=db.engine,
         tables=[
-            User.__table__,
-            Role.__table__,
+            UserORM.__table__,
+            RoleORM.__table__,
             RoleUsers.__table__,
             LoginLedger.__table__,
         ],
     )
     # create admin role
-    admin_role = Role(
+    admin_role = RoleORM(
         role_name="admin",
         role_description="admin role",
         created_at=datetime.now(),
@@ -44,7 +45,7 @@ def setup():
     )
 
     # create user role
-    user_role = Role(
+    user_role = RoleORM(
         role_name="user",
         role_description="user role",
         created_at=datetime.now(),
@@ -52,7 +53,7 @@ def setup():
     )
 
     # create admin user
-    admin_user = User(
+    admin_user = UserORM(
         username="admin",
         password=generate_password_hash("admin", method="scrypt"),
         # password='password',
@@ -63,7 +64,7 @@ def setup():
     )
 
     # create user user
-    user_user = User(
+    user_user = UserORM(
         username="user",
         password=generate_password_hash("user", method="scrypt"),
         # password='password',
@@ -106,10 +107,11 @@ def setup():
     db.session.refresh(user_role_user)
 
     db.metadata.create_all(
-        bind=db.engine, tables=[Document.__table__, Project.__table__]
+        bind=db.engine, tables=[DocumentORM.__table__, ProjectORM.__table__]
     )
     db.metadata.create_all(
-        bind=db.engine, tables=[DocumentShare.__table__, ProjectDocument.__table__]
+        bind=db.engine,
+        tables=[DocumentShare.__table__, ProjectDocument.__table__, IndexORM.__table__],
     )
 
     print("Database initialized!")

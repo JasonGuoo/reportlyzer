@@ -1,17 +1,17 @@
 import config
-from models.users import User, Role, RoleUsers, LoginLedger
-from models.documents import get_storage, LocalStorage
-from models.documents import (
+from models.db_models import UserORM, RoleORM, RoleUsers, LoginLedger
+from models.db_models import get_storage, LocalStorage
+from models.db_models import (
     DocumentShare,
-    Document,
+    DocumentORM,
     ProjectDocument,
-    Project,
+    ProjectORM,
 )
 import uuid, os, re, hashlib, datetime, json, logging
 import requests, requests.exceptions
 from urllib.parse import urlparse
 from app import db
-from models.documents import (
+from models.db_models import (
     DOCUMENT_PROPERTY_URL,
     DOCUMENT_PROPERTY_BASE_URL,
     DOCUMENT_PROPERTY_CHUCKSUM,
@@ -71,7 +71,7 @@ def create_document_from_url(
         title = get_filename_from_url(url)
 
     # Create Document record
-    doc = Document(id=doc_id, title=title, user_id=user_id)
+    doc = DocumentORM(id=doc_id, title=title, user_id=user_id)
 
     # Add timestamp
     doc.create_date = datetime.datetime.now()
@@ -117,23 +117,23 @@ def get_filename_from_url(url):
 
 def get_projects_of_user(user_id, sort_order="desc"):
     order = (
-        Project.update_date.desc()
+        ProjectORM.update_date.desc()
         if sort_order == "desc"
-        else Project.update_date.asc()
+        else ProjectORM.update_date.asc()
     )
-    projects = Project.query.filter_by(owner_id=user_id).order_by(order).all()
+    projects = ProjectORM.query.filter_by(owner_id=user_id).order_by(order).all()
     return projects
 
 
 def create_project(user_id, project_name):
-    project = Project(name=project_name, owner_id=user_id)
+    project = ProjectORM(name=project_name, owner_id=user_id)
     db.session.add(project)
     db.session.commit()
     return project
 
 
 def change_document_title(doc_id, new_title):
-    doc = Document.query.get(doc_id)
+    doc = DocumentORM.query.get(doc_id)
 
     if doc is None:
         raise ValueError(f"No document with id {doc_id}")
@@ -160,15 +160,15 @@ def add_documents_to_project(project_id, doc_ids):
 
 
 def get_documents_in_project(project_id):
-    documents = Document.query.join(
-        ProjectDocument, Document.id == ProjectDocument.document_id
+    documents = DocumentORM.query.join(
+        ProjectDocument, DocumentORM.id == ProjectDocument.document_id
     ).filter(ProjectDocument.project_id == project_id)
 
     return documents
 
 
 def update_project_update_time(project_id):
-    project = Project.query.get(project_id)
+    project = ProjectORM.query.get(project_id)
 
     if project is None:
         raise ValueError(f"Project id {project_id} not found")
@@ -179,7 +179,7 @@ def update_project_update_time(project_id):
 
 
 def delete_project(project_id):
-    project = Project.query.get(project_id)
+    project = ProjectORM.query.get(project_id)
 
     if project is None:
         raise ValueError(f"Project id {project_id} not found")
@@ -190,7 +190,7 @@ def delete_project(project_id):
 
 
 def add_property_to_document(doc_id, prop_name, prop_value):
-    doc = Document.query.get(doc_id)
+    doc = DocumentORM.query.get(doc_id)
 
     if doc is None:
         raise ValueError(f"No document with id {doc_id}")
@@ -205,7 +205,7 @@ def add_property_to_document(doc_id, prop_name, prop_value):
 
 
 def add_tag_to_document(doc_id, tag):
-    doc = Document.query.get(doc_id)
+    doc = DocumentORM.query.get(doc_id)
     if doc is None:
         raise ValueError(f"No document with id {doc_id}")
 
@@ -218,7 +218,7 @@ def add_tag_to_document(doc_id, tag):
 
 
 def remove_tag_from_document(doc_id, tag):
-    doc = Document.query.get(doc_id)
+    doc = DocumentORM.query.get(doc_id)
     if doc is None:
         raise ValueError(f"No document with id {doc_id}")
 
@@ -232,9 +232,9 @@ def remove_tag_from_document(doc_id, tag):
 
 def get_user_documents_by_title(user_id, title_contains):
     documents = (
-        Document.query.join(DocumentShare)
+        DocumentORM.query.join(DocumentShare)
         .filter(
-            DocumentShare.user_id == user_id, Document.title.contains(title_contains)
+            DocumentShare.user_id == user_id, DocumentORM.title.contains(title_contains)
         )
         .all()
     )
@@ -244,12 +244,12 @@ def get_user_documents_by_title(user_id, title_contains):
 
 def get_user_documents_in_project(user_id, project_id, title_contains):
     documents = (
-        Document.query.join(DocumentShare)
+        DocumentORM.query.join(DocumentShare)
         .join(ProjectDocument)
         .filter(
             DocumentShare.user_id == user_id,
             ProjectDocument.project_id == project_id,
-            Document.title.contains(title_contains),
+            DocumentORM.title.contains(title_contains),
         )
         .all()
     )

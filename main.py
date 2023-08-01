@@ -11,13 +11,13 @@ from flask_login import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
-from models import User, Role, RoleUsers
+from models import UserORM, RoleORM, RoleUsers
 from app import db, app, login_manager
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return UserORM.query.get(int(user_id))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -27,7 +27,7 @@ def login():
         email = request_data["email"]
         password = request_data["password"]
 
-        user = User.query.filter_by(email=email).first()
+        user = UserORM.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
             login_user(user)
@@ -59,10 +59,10 @@ def register():
 
         # Hash password
         hashed_pw = generate_password_hash(password, method="scrpyt")
-        user_role = Role.query.filter_by(name="user").first()
+        user_role = RoleORM.query.filter_by(name="user").first()
 
         # Create new user
-        new_user = User(username=username, password=hashed_pw, role_id=user_role.id)
+        new_user = UserORM(username=username, password=hashed_pw, role_id=user_role.id)
 
         # Add user to db
         db.session.add(new_user)
@@ -76,7 +76,7 @@ def register():
 @app.route("/create_role", methods=["GET", "POST"])
 @login_required
 def create_role():
-    admin_role = Role.query.filter_by(name="admin").first()
+    admin_role = RoleORM.query.filter_by(name="admin").first()
     if current_user.role_id != admin_role.id:
         flash("Only admins can create roles")
         return redirect(url_for("index"))
@@ -84,7 +84,7 @@ def create_role():
     if request.method == "POST":
         name = request.form["name"]
 
-        new_role = Role(name=name)
+        new_role = RoleORM(name=name)
         db.session.add(new_role)
         db.session.commit()
 
@@ -108,7 +108,7 @@ def create_user():
 @app.route("/edit_user/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def edit_user(user_id):
-    user = User.query.get(user_id)
+    user = UserORM.query.get(user_id)
 
     if request.method == "POST":
         # Get form data
