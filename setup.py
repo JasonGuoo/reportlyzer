@@ -20,6 +20,10 @@ from models import (
 )
 
 
+def dropall():
+    db.drop_all()
+
+
 def setup():
     # create the database
     db.metadata.create_all(
@@ -69,6 +73,17 @@ def setup():
         email="user@user.com",
     )
 
+    # write all to the database
+    db.session.add(admin_role)
+    db.session.add(user_role)
+    db.session.add(admin_user)
+    db.session.add(user_user)
+    db.session.commit()
+    db.session.refresh(admin_role)
+    db.session.refresh(user_role)
+    db.session.refresh(admin_user)
+    db.session.refresh(user_user)
+
     # create role user item
     admin_role_user = RoleUsers(
         role_id=admin_role.id,
@@ -83,15 +98,12 @@ def setup():
         updated_at=datetime.now(),
     )
 
-    # write all to the database
-    db.session.add(admin_role)
-    db.session.add(user_role)
-    db.session.add(admin_user)
-    db.session.add(user_user)
     db.session.add(admin_role_user)
     db.session.add(user_role_user)
 
     db.session.commit()
+    db.session.refresh(admin_role_user)
+    db.session.refresh(user_role_user)
 
     db.metadata.create_all(
         bind=db.engine, tables=[Document.__table__, Project.__table__]
@@ -104,4 +116,5 @@ def setup():
 
 
 with app.app_context():
+    dropall()
     setup()
