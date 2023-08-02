@@ -1,39 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        {% include 'header.html' %}
-        <title>Reportlyzer</title>
-    </head>
-    <body>
-        <div id="layoutSidenav">
-            {% include 'sidebar.html'%}
+
+<head>
+    {% include 'header.html' %}
+    <title>Reportlyzer</title>
+</head>
+
+<body style="height: 100vh;">
+    <div id="layoutSidenav" class="d-flex flex-column h-100 ">
+        {% include 'sidebar.html'%}
+        <main class="flex-grow-1 h-100 ">
             <div id="layoutSidenav_content">
-                <main>
-                    <div id="content_container" class="container-fluid px-4">
-                        {% block content %}
-                        {% endblock %}
-                        </div>
-                        <footer class="py-4 bg-light mt-auto footer">
-                            <div class="container-fluid px-4">
-                                <div class="d-flex align-items-center justify-content-between small">
-                                    <div class="text-muted">Copyright &copy; Reportlyzer 2023</div>
-                                    <div>
-                                        <a href="#">Privacy Policy</a>
-                                        &middot;
-                                        <a href="#">Terms &amp; Conditions</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </footer>
-                        <div style="height: 100vh"></div>
-                        <!-- <div class="card mb-4"><div class="card-body">When scrolling, the navigation stays at the top of the page. This is the end of the static navigation demo.</div></div> -->
-                    </div>
-                </main>
-                
+                <div class="container mt-5">
+                    <H1>&nbsp;</H1>
+                    {% block content %}
+
+                    <!-- The main content would be put here. -->
+
+                    {% endblock %}
+
+                </div>
+            </div>
+        </main>
+
+    </div>
+    <footer class="py-4 bg-light mt-auto footer">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center justify-content-between small">
+                <div class="text-muted">Copyright &copy; Reportlyzer 2023</div>
+                <div>
+                    <a href="#">Privacy Policy</a>
+                    &middot;
+                    <a href="#">Terms &amp; Conditions</a>
+                </div>
             </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <!-- <script src="js/scripts.js"></script> -->
-        <script type="text/javascript" src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-    </body>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+    <!-- <script src="js/scripts.js"></script> -->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+
 </html>

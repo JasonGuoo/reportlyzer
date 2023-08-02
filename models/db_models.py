@@ -122,6 +122,9 @@ DOCUMENT_PROPERTY_CHECKSUM_TYPE = "checksum_type"
 INDEX_TYPE_PDF = "INDEX_TYPE_PDF"
 INDEX_TYPE_IMAGE = "INDEX_TYPE_IMAGE"
 INDEX_TYPE_WEBPAGE = "INDEX_TYPE_WEBPAGE"
+INDEX_STATUS_NOT_INDEXED = "Not Indexed"
+INDEX_STATUS_INDEXING = "Indexing"
+INDEX_STATUS_INDEXED = "Indexed"
 
 
 # Document Type class to store the document type info in the postgresql database
@@ -161,6 +164,8 @@ class ProjectORM(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     owner_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    description = db.Column(db.String)
+
     create_date = db.Column(DateTime())
     update_date = db.Column(DateTime())
     is_deleted = db.Column(Boolean, default=False)
@@ -182,6 +187,8 @@ class IndexORM(db.Model):
     index_type = db.Column(db.String, default=INDEX_TYPE_PDF)
     index_extract_file_path = db.Column(db.String)
     index_file_path = db.Column(db.String)
+    index_status = db.Column(db.String(30), default=INDEX_STATUS_NOT_INDEXED)
+    index_date = db.Column(DateTime(), default=None)
     index_properties = db.Column(JSONB)
 
     # embedding method and llm_model, default is using chatgpt-3.5

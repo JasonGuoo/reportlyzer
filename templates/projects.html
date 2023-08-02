@@ -1,0 +1,103 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-table me-1"></i>
+        Projects
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Update</th>
+                    <th>Documents</th>
+                </tr>
+            </thead>
+            <!-- <tfoot>
+                <tr>
+                    <th>Name</th>
+                    <th>Update</th>
+                    <th>Documents</th>
+                </tr>
+            </tfoot> -->
+            {% if not projects %}
+
+            <tr>
+                <td colspan="3">No projects found</td>
+            </tr>
+
+            {% else %}
+            {% for project in projects %}
+            <tr>
+                <td><a href="project/{{project.id}}">{{ project.name }}</a></td>
+                <td>{{ project.update_date }}</td>
+                <td>{{ project.documents|length }}</td>
+            </tr>
+
+
+            {% endfor %}
+            {% endif %}
+
+
+
+        </table>
+        <!-- Button to launch modal -->
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+            Add Project
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="addProjectModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">New Project</h5>
+                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Form inside modal -->
+                        <form action="{{ url_for('create_project') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" name="name">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" rows="3" name="description"></textarea>
+                            </div>
+                            <button class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+        {% for category, message in messages %}
+
+        <div class="alert alert-{{ category }} fade show alert-dismissible border-1 ">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            {{ message }}
+        </div>
+
+        {% endfor %}
+
+        {% endif %}
+
+        {% endwith %}
+    </div>
+</div>
+
+
+
+{% endblock %}

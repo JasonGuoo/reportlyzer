@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -11,8 +12,9 @@ from flask_login import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
-from models import UserORM, RoleORM, RoleUsers
+from models import UserORM, RoleORM, RoleUsers, tools
 from app import db, app, login_manager
+from models.db_models import ProjectORM
 
 
 @login_manager.user_loader
@@ -124,6 +126,52 @@ def edit_user(user_id):
 @login_required
 def index():
     return render_template("reports.html")
+
+
+@app.route("/projects")
+@login_required
+def view_projects():
+    user_id = current_user.id
+    projects = tools.get_projects_of_user(user_id)
+    return render_template("projects.html", projects=projects)
+
+
+@app.route("/project/<int:project_id>")
+@login_required
+def view_project(project_id):
+    project = ProjectORM.query.get(project_id)
+    return render_template("project.html", project=project)
+
+
+@app.route("/create_project", methods=["GET", "POST"])
+@login_required
+def create_project():
+    if request.method == "POST":
+        name = request.form["name"]
+        if len(name) < 3:
+            flash("Name must be at least 3 chars", "error")
+            return
+
+        # Create project
+        description = request.form.get("description", "")
+        project = ProjectORM(
+            name=name,
+            description=description,
+            owner_id=current_user.id,
+            create_date=datetime.datetime.now(),
+            update_date=datetime.datetime.now(),
+        )
+        db.session.add(project)
+        db.session.commit()
+        db.session.refresh(project)
+        flash("Project created successfully!", "success")
+
+    return redirect("/projects")
+
+
+@app.route("/test")
+def test():
+    return render_template("test.html")
 
 
 if __name__ == "__main__":
