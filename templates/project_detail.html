@@ -1,0 +1,112 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="card mb-8">
+
+    <div class="card-header ">
+        <i class="fas fa-table me-1"></i>
+        <h3>{{ project.name }}</h3>
+        <p></p>
+        <p>{{ project.description }} -- Last updated: {{ project.update_date }}</p>
+
+    </div>
+
+    <div class="card-body ">
+        <table class="table table-bordered">
+
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Updated</th>
+                    <th>Type</th>
+                    <th>Tags</th>
+                    <th>Index Type</th>
+                    <th>Index Status</th>
+                    <th>Index Updated</th>
+                    <th>Embedding Method</th>
+                    <th>Embedding Model</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            {% for doc in documents %}
+
+            {% if not doc.index %}
+
+            <tr>
+                <td>{{ doc.title }}</td>
+                <td>{{ doc.update_time }}</td>
+                <td>{{ doc.file_type }}</td>
+
+                <td>
+                    {% for tag in doc.tags %}
+                    <span class="badge bg-secondary">{{ tag }}</span>
+                    {% endfor %}
+                </td>
+
+                <td colspan="5">Not indexed</td>
+
+                <td>
+                    <input type="checkbox" name="doc_{{doc.id}}">
+                </td>
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td>{{ doc.title }}</td>
+                <td>{{ doc.update_time }}</td>
+                <td>{{ doc.file_type }}</td>
+
+                <td>
+                    {% for tag in doc.tags %}
+                    <span class="badge bg-secondary">{{ tag }}</span>
+                    {% endfor %}
+                </td>
+
+                <td>{{ doc.index.index_type }}</td>
+                <td>{{ doc.index.status }}</td>
+                <td>{{ doc.index.update_time }}</td>
+                <td>{{ doc.index.embedding_method }}</td>
+                <td>{{ doc.index.embedding_model }}</td>
+            </tr>
+
+            {% endif %}
+
+            {% endfor %}
+
+        </table>
+    </div>
+</div>
+<div class="mt-3"></div>
+<button id="indexBtn" class="btn btn-primary">Index Documents</button>
+
+<script>
+    const indexBtn = document.getElementById('indexBtn');
+
+    indexBtn.addEventListener('click', () => {
+
+        const checkedDocs = document.querySelectorAll('input[type="checkbox"]:checked');
+
+        const docIds = [];
+
+        checkedDocs.forEach(checkbox => {
+            docIds.push(checkbox.name.split('_')[1]);
+        });
+
+        fetch('/build_index', {
+            method: 'POST',
+            body: JSON.stringify(docIds)
+        })
+            .then(response => {
+                // handle response 
+            });
+
+    });
+</script>
+
+<!-- Create documents to the project -->
+<a href="{{ url_for('create_documents', project_id=project.id) }}" class="btn btn-primary">Create Documents</a>
+
+{% endblock %}

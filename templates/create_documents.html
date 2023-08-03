@@ -1,0 +1,162 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2>Add Documents to {{ project.name }}</h2>
+
+<div class="card border-primary mb-6">
+
+  <div class="card-header"></div>
+
+  <div class="card-body">
+
+    <h4 class="card-title">Upload PDFs</h4>
+
+    <form id="uploadForm" method="post" enctype="multipart/form-data">
+      <input class="hiding " name="project_id" type="hidden" value="{{ project.id}}">
+      <div class="form-group">
+        <label>Upload PDFs to the project</label>
+        <hr>
+        <input class="form-control" type="file" id="fileInput" multiple>
+
+        <div id="selectedFiles"></div>
+      </div>
+      <hr>
+      <div class="progress">
+        <div id="progressBar" class="progress-bar" role="progressbar"></div>
+      </div>
+      <hr>
+      <button id="uploadButton" class="btn btn-primary" type="submit">
+        Upload
+      </button>
+
+      <button id="cancelButton" class="btn btn-secondary" type="cancel">
+        Cancel
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+<hr>
+
+<div class="card border-primary mb-6">
+
+  <div class="card-header"></div>
+
+  <div class="card-body">
+
+    <h4 class="card-title">Add URLs</h4>
+
+    <form id="urlForm">
+      <input class="hiding " name="project_id" type="hidden" value="{{ project.id}}">
+      <div class="form-group">
+        <label>Enter URLs</label>
+        <textarea id="urlInput" class="form-control" rows="4"></textarea>
+      </div>
+      <hr>
+      <button id="urlButton" class="btn btn-primary" type="submit">
+        Add
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+
+<hr>
+<button id="myButton" class="btn btn-primary">Back to {{project.name}}</button>
+
+<script>
+  document.getElementById('myButton').onclick = function () {
+    location.href = 'project/{{project.id}}';
+  };
+
+  // File preview
+  const fileInput = document.getElementById('fileInput');
+  const selectedFiles = document.getElementById('selectedFiles');
+
+  // Enable upload button
+  fileInput.addEventListener('change', () => {
+    uploadButton.disabled = false;
+  });
+
+  // Show selected files
+  fileInput.addEventListener('change', (e) => {
+    selectedFiles.innerHTML = '';
+    // loop through files and add to DOM
+  });
+
+  // Progress bar
+  const progressBar = document.getElementById('progressBar');
+  const updateProgress = (percent) => {
+    // update progress bar width/text
+  };
+
+  // Upload form submit
+  const uploadForm = document.getElementById('uploadForm');
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const files = fileInput.files;
+
+    if (files.length === 0) {
+      alert('No files selected');
+      return;
+    }
+
+    // const types = ['application/pdf', 'image/jpeg'];
+    const types = ['application/pdf'];
+    for (let i = 0; i < files.length; i++) {
+      let file = files[i];
+
+      // Check file type
+      if (!checkFileType(file, types)) {
+        alert('Only PDF files allowed');
+        return;
+      }
+    }
+
+    const formData = new FormData();
+
+    for (let i = 0; i < files.length; i++) {
+
+      let file = files[i];
+
+      // Append each file to FormData
+      formData.append('files', file);
+
+      // Update progress bar
+      updateProgress(i / files.length * 100);
+
+    }
+
+    // Make POST request to server endpoint
+    const response = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    // Handle response
+    if (response.ok) {
+      alert('Files uploaded successfully');
+      uploadForm.reset();
+    } else {
+      alert('Error uploading files');
+    }
+
+  });
+
+  function checkFileType(file, types) {
+    return types.includes(file.type);
+  }
+
+
+// Enable URL button on input
+// Same as before...
+
+</script>
+
+{% endblock %}

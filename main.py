@@ -19,8 +19,7 @@ from models.db_models import ProjectORM
 
 @login_manager.user_loader
 def load_user(user_id):
-    return UserORM.query.get(int(user_id))
-
+    return db.session.get(UserORM, user_id)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -33,7 +32,7 @@ def login():
 
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return render_template("index.html")
+            return render_template("projects.html")
         else:
             flash("Invalid username or password")
 
@@ -140,7 +139,8 @@ def view_projects():
 @login_required
 def view_project(project_id):
     project = ProjectORM.query.get(project_id)
-    return render_template("project.html", project=project)
+    documents = tools.get_documents_for_project(project_id)
+    return render_template("project_detail.html", project=project, documents=documents)
 
 
 @app.route("/create_project", methods=["GET", "POST"])
@@ -168,6 +168,23 @@ def create_project():
 
     return redirect("/projects")
 
+
+@app.route("/create_documents")
+@login_required
+def create_documents():
+    project_id = request.args.get("project_id")
+    project = ProjectORM.query.get(project_id)
+    return render_template("create_documents.html", project=project)
+
+
+@app.route('/upload', methods=['POST'])
+@login_required
+def upload_file():
+    files = request.files.getlist('files')
+
+    # Process files and save
+
+    return {'message': 'Success'}
 
 @app.route("/test")
 def test():

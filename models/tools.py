@@ -1,5 +1,5 @@
 import config
-from models.db_models import UserORM, RoleORM, RoleUsers, LoginLedger
+from models.db_models import IndexORM, UserORM, RoleORM, RoleUsers, LoginLedger
 from models.db_models import get_storage, LocalStorage
 from models.db_models import (
     DocumentShare,
@@ -242,7 +242,7 @@ def get_user_documents_by_title(user_id, title_contains):
     return documents
 
 
-def get_user_documents_in_project(user_id, project_id, title_contains):
+def get_user_documents_in_project(user_id, project_id, title_contains: str):
     documents = (
         DocumentORM.query.join(DocumentShare)
         .join(ProjectDocument)
@@ -253,5 +253,25 @@ def get_user_documents_in_project(user_id, project_id, title_contains):
         )
         .all()
     )
+
+    for doc in documents:
+        doc.index = IndexORM.query.filter_by(document_id=doc.id).first()
+
+    return documents
+
+
+# tools.py
+def get_documents_for_project(project_id):
+    documents = (
+        DocumentORM.query.join(ProjectDocument)
+        .filter(
+            ProjectDocument.project_id == project_id,
+            ProjectDocument.document_id == DocumentORM.id,
+        )
+        .all()
+    )
+
+    for doc in documents:
+        doc.index = IndexORM.query.filter_by(document_id=doc.id).first()
 
     return documents
