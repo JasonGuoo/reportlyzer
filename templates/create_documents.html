@@ -6,7 +6,7 @@
 
 <div class="card border-primary mb-6">
 
-  <div class="card-header"></div>
+  <!-- <div class="card-header"></div> -->
 
   <div class="card-body">
 
@@ -22,7 +22,8 @@
         <div id="selectedFiles"></div>
       </div>
       <hr>
-      <div class="progress">
+      <div id="fileNames"></div>
+      <div id="progress" class="progress" style="display: none;">
         <div id="progressBar" class="progress-bar" role="progressbar"></div>
       </div>
       <hr>
@@ -43,7 +44,7 @@
 
 <div class="card border-primary mb-6">
 
-  <div class="card-header"></div>
+  <!-- <div class="card-header"></div> -->
 
   <div class="card-body">
 
@@ -83,16 +84,31 @@
     uploadButton.disabled = false;
   });
 
+  const fileNames = document.getElementById('fileNames');
   // Show selected files
   fileInput.addEventListener('change', (e) => {
     selectedFiles.innerHTML = '';
     // loop through files and add to DOM
+    const fileNames = document.getElementById('fileNames');
+
+    fileNames.innerText = ''; // Clear
+
+    for (const file of e.target.files) {
+      const p = document.createElement('p');
+      p.innerText = file.name;
+
+      fileNames.appendChild(p);
+    }
   });
 
   // Progress bar
   const progressBar = document.getElementById('progressBar');
+  const progressDiv = document.getElementById('progress');
+
   const updateProgress = (percent) => {
     // update progress bar width/text
+    progressBar.style.width = `${percent}%`;
+    progressBar.innerHTML = `${percent}%`;
   };
 
   // Upload form submit
@@ -120,6 +136,7 @@
     }
 
     const formData = new FormData();
+    progressDiv.style.display = 'block';
 
     for (let i = 0; i < files.length; i++) {
 
@@ -141,12 +158,14 @@
 
     // Handle response
     if (response.ok) {
-      alert('Files uploaded successfully');
+      updateProgress(100);
+      // alert('Files uploaded successfully');
       uploadForm.reset();
+      // window.location.href = `/project/${projectId}`;
     } else {
       alert('Error uploading files');
     }
-
+    // progressDiv.style.display = 'none';
   });
 
   function checkFileType(file, types) {
