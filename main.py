@@ -144,6 +144,12 @@ def view_projects():
 def view_project(project_id):
     project = ProjectORM.query.get(project_id)
     documents = tools.get_documents_for_project(project_id)
+
+    for document in documents:
+        # get the update_time from DocumentShare
+        document.update_time = DocumentShare.query.filter_by(document_id=document.id).first().update_time
+        document.update_time = document.update_time.strftime("%Y-%m-%d %H:%M")
+
     return render_template("project_detail.html", project=project, documents=documents)
 
 

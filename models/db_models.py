@@ -21,7 +21,7 @@ from config import (
     S3_INDEX_BUCKET,
 )
 import config
-import boto3
+import boto3, datetime
 from botocore.exceptions import ClientError
 
 
@@ -155,6 +155,7 @@ class DocumentShare(db.Model):
     document_id = db.Column(
         db.Integer, db.ForeignKey("document.id")
     )  # the table name would be lower case, so the User model map to "user" table
+    update_time = db.Column(db.DateTime(), default=datetime.datetime.now)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
 
