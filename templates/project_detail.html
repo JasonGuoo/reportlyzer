@@ -13,12 +13,11 @@
     </div>
 
     <div class="card-body ">
-        <table class="table table-bordered">
+        <table class="table table-responsive table-striped ">
 
             <thead>
                 <tr>
                     <th>Title</th>
-                    <th>Updated</th>
                     <th>Type</th>
                     <th>Tags</th>
                     <th>Index Type</th>
@@ -31,12 +30,10 @@
             </thead>
 
             {% for doc in documents %}
-
             {% if not doc.index %}
 
             <tr>
                 <td>{{ doc.title }}</td>
-                <td>{{ doc.update_time }}</td>
                 <td>{{ doc.file_type }}</td>
 
                 <td>
@@ -53,16 +50,17 @@
             </tr>
 
             {% else %}
-
             <tr>
                 <td>{{ doc.title }}</td>
-                <td>{{ doc.update_time }}</td>
                 <td>{{ doc.file_type }}</td>
 
                 <td>
+                    <!-- if doc.tags is not none-->
+                    {% if doc.tags %}
                     {% for tag in doc.tags %}
                     <span class="badge bg-secondary">{{ tag }}</span>
                     {% endfor %}
+                    {% endif %}
                 </td>
 
                 <td>{{ doc.index.index_type }}</td>
@@ -71,7 +69,6 @@
                 <td>{{ doc.index.embedding_method }}</td>
                 <td>{{ doc.index.embedding_model }}</td>
             </tr>
-
             {% endif %}
 
             {% endfor %}
@@ -95,12 +92,19 @@
             docIds.push(checkbox.name.split('_')[1]);
         });
 
-        fetch('/build_index', {
+        fetch('/build_index/{{project.id}}', {
             method: 'POST',
             body: JSON.stringify(docIds)
         })
             .then(response => {
                 // handle response 
+                if (response.ok) {
+                    alert('Index build finished successfully');
+                    window.location.href = '/project/{{project.id}}';
+                }
+                else {
+                    alert(response);
+                }
             });
 
     });

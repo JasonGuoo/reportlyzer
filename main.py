@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager,
@@ -14,12 +14,16 @@ from dotenv import load_dotenv
 import os
 from models import UserORM, RoleORM, RoleUsers, tools
 from app import db, app, login_manager
-from models.db_models import ProjectORM
+from models.db_models import ProjectORM, DocumentORM, ProjectDocument, DocumentShare
+import re
+from urllib.parse import urlparse
+from pathlib import Path
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(UserORM, user_id)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -177,14 +181,90 @@ def create_documents():
     return render_template("create_documents.html", project=project)
 
 
-@app.route('/upload', methods=['POST'])
+@app.route("/upload", methods=["POST"])
 @login_required
 def upload_file():
-    files = request.files.getlist('files')
+    files = request.files.getlist("files")
 
     # Process files and save
 
-    return {'message': 'Success'}
+    return {"message": "Success"}
+
+
+@app.route("/add_urls/<int:project_id>", methods=["POST"])
+@login_required
+def add_url(project_id):
+    data = request.get_json()
+    urls = data["urls"]
+
+    for url in urls:
+        # Create document
+        title, extension = extract_title(url)
+        create_date = datetime.datetime.now()
+        prop = {'url': url}
+        doc = DocumentORM(title=title, properties=prop, tags={},
+                          create_date=create_date, file_type=extension)
+
+        db.session.add(doc)
+        db.session.commit()
+        db.session.refresh(doc)
+
+        # Get project
+        # project_id = data["project_id"]
+        # project = ProjectORM.query.get(project_id)
+
+        # Link document to project
+        project_doc = ProjectDocument(project_id=project_id, document_id=doc.id)
+
+        # Link the document to DocumentShare
+        doc_share = DocumentShare(document_id=doc.id, user_id=current_user.id)
+
+        db.session.add(project_doc)
+        db.session.add(doc_share)
+        db.session.commit()
+        db.session.refresh(doc)
+        db.session.refresh(project_doc)
+        db.session.refresh(doc_share)
+
+    # return http 200 and message
+    return jsonify({"message": "URLs added successfully"}), 200
+
+@app.route("/build_index/<int:project_id>", methods=["POST"])
+@login_required
+def build_index(project_id):
+
+    return jsonify({"message": "Index built successfully"}),  200
+def extract_title(url):
+    try:
+        # Get domain name without www
+        domain = urlparse(url).netloc.split('www.')[-1]
+
+        # Remove protocol and get page path
+        page = url.split(domain)[1]
+        page = re.sub(r'^:/?', '', page)
+
+        # Remove everything after / in page path
+        page = page.split('/')[-1]
+
+        # Remove any query parameters
+        page = page.split('?')[0]
+
+        # Replace hyphens with spaces
+        page = page.replace('-', '_')
+
+        # Capitalize words and return
+        title = page.title()
+        # Get filename from URL path
+        filename = Path(urlparse(url).path).name
+
+        # Get extension
+        ext = Path(filename).suffix
+
+        return title, ext
+
+    except:
+        return None
+
 
 @app.route("/test")
 def test():

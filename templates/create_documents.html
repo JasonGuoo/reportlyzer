@@ -57,6 +57,8 @@
         <textarea id="urlInput" class="form-control" rows="4"></textarea>
       </div>
       <hr>
+      <div id="urls_display"></div>
+      <hr>
       <button id="urlButton" class="btn btn-primary" type="submit">
         Add
       </button>
@@ -172,9 +174,65 @@
     return types.includes(file.type);
   }
 
+  //  https://www.lseg.com/content/dam/lseg/en_us/documents/reports/lseg-sustainability-report.pdf
+  //  https://www.lseg.com/content/dam/lseg/en_us/documents/sustainability/lseg-equity-pay-report-2022.pdf
 
-// Enable URL button on input
-// Same as before...
+  // Enable URL button on input
+  // Same as before...
+  // URL validation regex
+  const urlRegex = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/;
+
+  // Submit handler
+  urlForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const urlstr = urlInput.value.trim();
+
+    // Basic validation
+    if (urlstr === '') {
+      alert('Please enter a URL');
+      return;
+    }
+
+    // Get all entered URLs 
+    const urlValues = urlInput.value.split('\n');
+    // for (url in urlValues) {
+    //   // Validate URL
+    //   if (!urlRegex.test(url)) {
+    //     alert('Invalid URL');
+    //     return;
+    //   }
+    // }
+
+    // Disable input to avoid multiple submits
+    urlInput.disabled = true;
+
+    // Send POST request to server
+    const res = await fetch('/add_urls/{{project.id}}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        urls: urlValues,
+      })
+    });
+
+    if (res.ok) {
+      // Display entered url  
+      const urls_display = document.getElementById('urls_display');
+      urls_display.innerText = urlValues.join('\n');
+
+      // Clear input
+      urlInput.value = '';
+
+    } else {
+      console.log('Error adding URL');
+    }
+
+    // Re-enable input
+    urlInput.disabled = false;
+
+  })
 
 </script>
 
