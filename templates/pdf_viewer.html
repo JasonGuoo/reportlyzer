@@ -52,13 +52,21 @@
 -->
 
 <div id="pdf-container" class="d-flex flex-column h-100 "></div>
+<input type="number" id="page-number" min="1" value="1">
+    <button onclick="goToPage()">Go to Page</button>
+
   <script>
     const url = '{{ url_for("static", filename="test/extractPdfInput.pdf") }}';
     var options = {
-       pdfOpenParams: { page: '2', zoom:"100", pagemode: 'thumbs', scrollbar: '1', search: 'PDFObject', toolbar: '1', statusbar: '1', messages: '0', navpanes: '1', fdf: url }
+       pdfOpenParams: { page: '2', zoom:"100", pagemode: 'thumbs', scrollbar: '1', search: 'Birth', toolbar: '1', statusbar: '1', messages: '0', navpanes: '1', fdf: url }
     };
 
-    PDFObject.embed(url, "#pdf-container", options);
+    var pdf_obj = PDFObject.embed(url, "#pdf-container", options);
+    function goToPage() {
+            var pageNumber = document.getElementById('page-number').value;
+            options.page = pageNumber;
+            pdf_obj = PDFObject.embed(url, "#pdf-container", options);
+        }
   </script>
 
 
