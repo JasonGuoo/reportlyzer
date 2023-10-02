@@ -6,21 +6,33 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js" integrity="sha512-BbrZ76UNZq5BhH7LL7pn9A4TKQpQeNCHOo65/akfelcIBbcVvYWOFQKPXIrykE3qZxYjmDX573oa4Ywsc7rpTw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css" integrity="sha512-tze+o/xG0w3yxxE8xe32piisVvI/LfcEuf6LW7lFLUxhio2SfFQ9mQ0TqB0avvonmxUXT7/l8+fnWkR03u85fQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.js" integrity="sha512-r/1hgDCXmxicFJ66QCjMCFl0dEhTBu7kYqoef3OrdHbqrnyhp1V/GhyWQg8Gto8412MUqU8AbMSpc5TLbRURhQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.12/pdfobject.min.js" integrity="sha512-lDL6DD6x4foKuSTkRUKIMQJAoisDeojVPXknggl4fZWMr2/M/hMiKLs6sqUvxP/T2zXdrDMbLJ0/ru8QSZrnoQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+<!--
 <canvas id="pdf-canvas"></canvas>
+  <input type="number" id="page-number" min="1" max="100" value="1">
+  <button onclick="scrollToPage()">Go to page</button>
 
   <script>
     const url = '{{ url_for("static", filename="test/extractPdfInput.pdf") }}';
-    const pageNum = 3;
 
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const canvas = document.getElementById('pdf-canvas');
+    const pageNumberInput = document.getElementById('page-number');
 
-    pdfjsLib.getDocument(url).promise.then(pdfDoc => {
-      pdfDoc.getPage(pageNum).then(page => {
-        const viewport = page.getViewport({ scale: 1 });
+    let pdfDoc = null;
+    let pageNum = 1;
+
+    function scrollToPage() {
+      pageNum = parseInt(pageNumberInput.value);
+      renderPage(pageNum);
+    }
+
+    function renderPage(num) {
+      pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale: 1.2 });
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
@@ -30,7 +42,23 @@
         };
         page.render(renderContext);
       });
+    }
+
+    pdfjsLib.getDocument(url).promise.then(pdfDoc_ => {
+      pdfDoc = pdfDoc_;
+      renderPage(pageNum);
     });
+  </script>
+-->
+
+<div id="pdf-container" class="d-flex flex-column h-100 "></div>
+  <script>
+    const url = '{{ url_for("static", filename="test/extractPdfInput.pdf") }}';
+    var options = {
+       pdfOpenParams: { page: '2', zoom:"100", pagemode: 'thumbs', scrollbar: '1', search: 'PDFObject', toolbar: '1', statusbar: '1', messages: '0', navpanes: '1', fdf: url }
+    };
+
+    PDFObject.embed(url, "#pdf-container", options);
   </script>
 
 
