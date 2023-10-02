@@ -106,16 +106,18 @@
 
         fetch('/build_index/{{project.id}}', {
             method: 'POST',
-            body: JSON.stringify(docIds)
+            body: JSON.stringify({
+                docs_ids: docIds
+            })
         })
             .then(response => {
                 // handle response 
                 if (response.ok) {
                     alert('Index build finished successfully');
-                    window.location.href = '/project/{{project.id}}';
+                    // window.location.href = '/project/{{project.id}}';
                 }
                 else {
-                    alert(response);
+                    alert('response');
                 }
             });
 
@@ -149,7 +151,10 @@
 
         fetch('/delete_docs/{{project.id}}', {
             method: 'POST',
-            body: JSON.stringify(docIds)
+            body: JSON.stringify(docIds),
+            headers: {
+                'Content-Type': 'application/json'
+            },
         })
             .then(response => {
                 // handle response 
@@ -158,7 +163,7 @@
                     window.location.href = '/project/{{project.id}}';
                 }
                 else {
-                    alert(response);
+                    alert('response');
                 }
             });
 

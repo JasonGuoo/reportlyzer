@@ -37,3 +37,10 @@ Generate five tags, less than 3 words, and give numbers for the tags from this n
 ## LLM related
 ### Define the model and the version in LLM
 https://clemenssiebler.com/posts/using-langchain-and-chatgpt-turbo-with-azure-openai-service/
+
+
+## PDF extraction
+### steps of using Adobe api to extract the PDF file:
+https://developer.adobe.com/document-services/docs/overview/pdf-extract-api/gettingstarted/#tag/Split-PDF/operation/pdfoperations.splitpdf.jobstatus
+  pdfservices-sdk==2.3.0
+  The example code is in the following link:  https://github.com/adobe/pdfservices-python-sdk-samples

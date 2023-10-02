@@ -1,5 +1,5 @@
 import config
-from models.db_models import IndexORM, UserORM, RoleORM, RoleUsers, LoginLedger
+from models.db_models import IndexORM, UserORM, RoleORM, RoleUsers, LoginLedger, Storage
 from models.db_models import get_storage, LocalStorage
 from models.db_models import (
     DocumentShare,
@@ -11,11 +11,19 @@ import uuid, os, re, hashlib, datetime, json, logging
 import requests, requests.exceptions
 from urllib.parse import urlparse
 from app import db
-from models.db_models import (
-    DOCUMENT_PROPERTY_URL,
-    DOCUMENT_PROPERTY_BASE_URL,
-    DOCUMENT_PROPERTY_CHUCKSUM,
+import models.db_models as db_models
+
+from config import (
+    AZURE_DOC_CONTAINER,
+    AZURE_INDEX_CONTAINER,
+    DOC_BASE_PATH,
+    DOC_INDEX_PATH,
+    S3_DOC_BUCKET,
+    S3_INDEX_BUCKET,
+    DEFAULT_DOC_STORAGE,
+    DEFAULT_INDEX_STORAGE
 )
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -29,20 +37,22 @@ def create_storage_for_url(url, storage_type=config.DEFAULT_DOC_STORAGE) -> str:
     try:
         # Generate random doc id
         doc_id = generate_doc_id()
+        response = requests.get(url)
+        response.raise_for_status()
 
-        if url.endswith(".pdf"):
+        if url.endswith(".pdf") or response.headers.get("Content-Type") == "application/pdf":
             # Download PDF from url
-            response = requests.get(url)
-            response.raise_for_status()
 
-            # Save to storage
-            storage = get_storage(
-                file_id=doc_id,
-                file_type="document",
-                file_ext="pdf",
-                storage_type=storage_type,
-            )
-            storage.write(response.content)
+            if storage_type == db_models.LOCAL:
+                # Save to storage
+                storage = get_storage(
+                    file_id=doc_id,
+                    file_type="document",
+                    file_ext="pdf",
+                    storage_type=storage_type,
+                    base_path=DOC_BASE_PATH,
+                )
+                storage.write(response.content)
 
         return doc_id
 
@@ -83,9 +93,9 @@ def create_document_from_url(
     # Build properties
     doc.properties = json.dumps(
         {
-            DOCUMENT_PROPERTY_URL: url,
-            DOCUMENT_PROPERTY_BASE_URL: urlparse(url).netloc,
-            DOCUMENT_PROPERTY_CHUCKSUM: checksum,
+            db_models.DOCUMENT_PROPERTY_URL: url,
+            db_models.DOCUMENT_PROPERTY_BASE_URL: urlparse(url).netloc,
+            db_models.DOCUMENT_PROPERTY_CHUCKSUM: checksum,
         }
     )
 
@@ -98,6 +108,9 @@ def create_document_from_url(
 
     return doc_id
 
+def is_document_exists(bytes):
+    checksum = hashlib.sha256(bytes).hexdigest()
+    return DocumentORM.query.filter_by(checksum=checksum).first() is not None
 
 def get_filename_from_url(url):
     parsed = urlparse(url)
@@ -188,6 +201,68 @@ def delete_project(project_id):
     db.session.commit()
     return project
 
+def delete_documents_from_project(project_id, doc_ids):
+    for doc_id in doc_ids:
+        project_doc = ProjectDocument.query.filter_by(project_id=project_id, document_id=doc_id).first()
+        db.session.delete(project_doc)
+
+    db.session.commit()
+
+def upload_file_to_project(project_id, file):
+    # Process files and save
+    # enumerate all the file in files
+    # extract the title from the file
+    # create storage instance and use it to store the file
+    # create document row in the Document
+    # add the Document to the Project
+    # commit the database
+    # refresh the ORM
+
+    # Create document
+    title, extension = extract_title(file.filename)
+    storage = Storage(file)
+    storage.save()
+    document = DocumentORM(
+        title=title,
+        extension=extension,
+        storage=storage,
+        create_date=datetime.datetime.now(),
+        update_date=datetime.datetime.now(),
+        project_id=project_id,
+    )
+    db.session.add(document)
+    db.session.commit()
+
+def extract_title(url):
+    try:
+        # Get domain name without www
+        domain = urlparse(url).netloc.split('www.')[-1]
+
+        # Remove protocol and get page path
+        page = url.split(domain)[1]
+        page = re.sub(r'^:/?', '', page)
+
+        # Remove everything after / in page path
+        page = page.split('/')[-1]
+
+        # Remove any query parameters
+        page = page.split('?')[0]
+
+        # Replace hyphens with spaces
+        page = page.replace('-', '_')
+
+        # Capitalize words and return
+        title = page.title()
+        # Get filename from URL path
+        filename = Path(urlparse(url).path).name
+
+        # Get extension
+        ext = Path(filename).suffix
+
+        return title, ext
+
+    except:
+        return None
 
 def add_property_to_document(doc_id, prop_name, prop_value):
     doc = DocumentORM.query.get(doc_id)

@@ -17,7 +17,7 @@ from models import (
     DocumentShare,
     ProjectORM,
     ProjectDocument,
-    IndexORM,
+    IndexORM, DocumentExtraction,
 )
 
 
@@ -111,7 +111,7 @@ def setup():
     )
     db.metadata.create_all(
         bind=db.engine,
-        tables=[DocumentShare.__table__, ProjectDocument.__table__, IndexORM.__table__],
+        tables=[DocumentShare.__table__, ProjectDocument.__table__, IndexORM.__table__, DocumentExtraction.__table__],
     )
 
     print("Database initialized!")
@@ -120,3 +120,5 @@ def setup():
 with app.app_context():
     dropall()
     setup()
+
+    # db.metadata.create_all(bind=db.engine, tables=[DocumentExtraction.__table__])

@@ -17,7 +17,6 @@ from app import db, app, login_manager
 from models.db_models import ProjectORM, DocumentORM, ProjectDocument, DocumentShare
 import re
 from urllib.parse import urlparse
-from pathlib import Path
 
 
 @login_manager.user_loader
@@ -53,7 +52,9 @@ def logout():
 @app.route("/index")
 @login_required
 def index_home():
-    return render_template("index.html")
+    user_id = current_user.id
+    projects = tools.get_projects_of_user(user_id)
+    return render_template("projects.html", projects=projects)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -128,7 +129,9 @@ def edit_user(user_id):
 @app.route("/")
 @login_required
 def index():
-    return render_template("reports.html")
+    user_id = current_user.id
+    projects = tools.get_projects_of_user(user_id)
+    return render_template("projects.html", projects=projects)
 
 
 @app.route("/projects")
@@ -147,7 +150,8 @@ def view_project(project_id):
 
     for document in documents:
         # get the update_time from DocumentShare
-        document.update_time = DocumentShare.query.filter_by(document_id=document.id).first().update_time
+        document.update_time = DocumentShare.query.filter_by(
+            document_id=document.id).first().update_time
         document.update_time = document.update_time.strftime("%Y-%m-%d %H:%M")
 
     return render_template("project_detail.html", project=project, documents=documents)
@@ -192,7 +196,8 @@ def create_documents():
 def upload_file():
     files = request.files.getlist("files")
 
-    # Process files and save
+    project_id = request.form.get("project_id")
+
 
     return {"message": "Success"}
 
@@ -235,47 +240,33 @@ def add_url(project_id):
     # return http 200 and message
     return jsonify({"message": "URLs added successfully"}), 200
 
+
 @app.route("/build_index/<int:project_id>", methods=["POST"])
 @login_required
 def build_index(project_id):
+    return jsonify({"message": "Index built successfully"}), 200
 
-    return jsonify({"message": "Index built successfully"}),  200
-def extract_title(url):
+
+@app.route("/delete_docs/<int:project_id>", methods=["POST"])
+@login_required
+def delete_document(project_id):
+    data = request.get_json()
+    # print(data)
+    # the data is an array of the document ids
+    # delete the document from the project
     try:
-        # Get domain name without www
-        domain = urlparse(url).netloc.split('www.')[-1]
+        tools.delete_documents_from_project(project_id, data)
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "Error deleting document"}), 400
 
-        # Remove protocol and get page path
-        page = url.split(domain)[1]
-        page = re.sub(r'^:/?', '', page)
-
-        # Remove everything after / in page path
-        page = page.split('/')[-1]
-
-        # Remove any query parameters
-        page = page.split('?')[0]
-
-        # Replace hyphens with spaces
-        page = page.replace('-', '_')
-
-        # Capitalize words and return
-        title = page.title()
-        # Get filename from URL path
-        filename = Path(urlparse(url).path).name
-
-        # Get extension
-        ext = Path(filename).suffix
-
-        return title, ext
-
-    except:
-        return None
+    return jsonify({"message": "Delete Document successfully"}), 200
 
 
 @app.route("/test")
 def test():
-    return render_template("test.html")
-
+    # return render_template("test.html")
+    return render_template("pdf_viewer.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

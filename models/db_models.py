@@ -12,18 +12,28 @@ from sqlalchemy.dialects.postgresql import JSONB
 from app import db, app
 import hashlib, os
 from azure.storage.blob import BlobServiceClient
-from config import (
-    AZURE_DOC_CONTAINER,
-    AZURE_INDEX_CONTAINER,
-    DOC_BASE_PATH,
-    DOC_INDEX_PATH,
-    S3_DOC_BUCKET,
-    S3_INDEX_BUCKET,
-)
+
 import config
 import boto3, datetime
 from botocore.exceptions import ClientError
 
+DOCUMENT_TYPE_DOCUMENT = "document"
+DOCUMENT_TYPE_INDEX = "index"
+DOCUMENT_PROPERTY_URL = "url"
+DOCUMENT_PROPERTY_BASE_URL = "base_url"
+DOCUMENT_PROPERTY_CHUCKSUM = "checksum"
+DOCUMENT_PROPERTY_CHECKSUM_TYPE = "checksum_type"
+
+INDEX_TYPE_PDF = "INDEX_TYPE_PDF"
+INDEX_TYPE_IMAGE = "INDEX_TYPE_IMAGE"
+INDEX_TYPE_WEBPAGE = "INDEX_TYPE_WEBPAGE"
+INDEX_STATUS_NOT_INDEXED = "Not Indexed"
+INDEX_STATUS_INDEXING = "Indexing"
+INDEX_STATUS_INDEXED = "Indexed"
+
+LOCAL = 'local'
+S3 = 'S3'
+AZURE = 'Azure'
 
 class UserORM(db.Model, UserMixin):
     __tablename__ = "user"
@@ -112,21 +122,6 @@ class LoginLedger(db.Model, UserMixin):
         return "<LoginLedger {}>".format(self.user_id)
 
 
-DOCUMENT_TYPE_DOCUMENT = "document"
-DOCUMENT_TYPE_INDEX = "index"
-DOCUMENT_PROPERTY_URL = "url"
-DOCUMENT_PROPERTY_BASE_URL = "base_url"
-DOCUMENT_PROPERTY_CHUCKSUM = "checksum"
-DOCUMENT_PROPERTY_CHECKSUM_TYPE = "checksum_type"
-
-INDEX_TYPE_PDF = "INDEX_TYPE_PDF"
-INDEX_TYPE_IMAGE = "INDEX_TYPE_IMAGE"
-INDEX_TYPE_WEBPAGE = "INDEX_TYPE_WEBPAGE"
-INDEX_STATUS_NOT_INDEXED = "Not Indexed"
-INDEX_STATUS_INDEXING = "Indexing"
-INDEX_STATUS_INDEXED = "Indexed"
-
-
 # Document Type class to store the document type info in the postgresql database
 class DocumentORM(db.Model):
     __tablename__ = "document"
@@ -138,16 +133,7 @@ class DocumentORM(db.Model):
     type = Column(String(100))
     storage_type = db.Column(db.String(20), default="local")
     file_type = db.Column(db.String(20), default="pdf")
-
-    @property
-    def storage(self):
-        if self.storage_type == "local":
-            return LocalStorage()
-        elif self.storage_type == "s3":
-            return S3Storage()
-        elif self.storage_type == "azure":
-            return AzureStorage()
-
+    checksum = db.Column(db.Integer)
 
 # Store which user has access to which document
 class DocumentShare(db.Model):
@@ -197,14 +183,21 @@ class IndexORM(db.Model):
     embedding_model = db.Column(db.String, default="gpt-3.5-turbo-0613")
     embedding_model_version = db.Column(db.String, default="2023-06-13")
 
-    def build(self):
-        # Index building logic:
-        # - Read document contents from self.document
-        # - Calculate embeddings using self.embedding_method
-        # - Query LLM using self.llm_model
-        # - Write to storage: self.storage
-        pass
 
+DOCUMENT_EXTRACTING_STATUS_NOT_EXTRACT = 'not_extract'
+DOCUMENT_EXTRACTING_STATUS_EXTRACT_SUCCESS = 'extract_success'
+DOCUMENT_EXTRACTING_STATUS_EXTRACT_FAILED = 'extract_failed'
+DOCUMENT_EXTRACTING_STATUS_EXTRACT_PENDING = 'extract_pending'
+
+
+class DocumentExtraction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"))
+    status = db.Column(db.String(30), default=DOCUMENT_EXTRACTING_STATUS_NOT_EXTRACT)
+    extraction_path = db.Column(db.String)
+    extraction_date = db.Column(DateTime(), default=None)
+    extraction_properties = db.Column(JSONB)
+    extraction_error = db.Column(JSONB)
 
 class Storage:
     def __init__(
