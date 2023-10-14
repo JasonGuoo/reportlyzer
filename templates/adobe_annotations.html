@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Adobe Acrobat Services PDF Embed API Sample</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1" />
+
+    <script>
+        var client_id = "ae2081b9012f44148d830d8a229e5e8d";
+
+        /* List of annotations */
+        const annotations = [
+            /* Annotation data for highlight */
+            {
+                "@context": [
+                    "https://www.w3.org/ns/anno.jsonld",
+                    "https://comments.acrobat.com/ns/anno.jsonld"
+                ],
+                "type": "Annotation",
+                "id": "8a8ea969-d860-8dc3-5chb-29d9cbb1b84",
+                "bodyValue": "Prime or plus plan for protection.",
+                "motivation": "commenting",
+                "target": {
+                    "source": "6d07d124-ac85-43b3-a867-36930f502ac6",
+                    "selector": {
+                        "node": {
+                            "index": 0
+                        },
+                        "opacity": 0.4,
+                        "subtype": "highlight",
+                        "boundingBox": [
+                            71.69551583223566,
+                            325.5741406817769,
+                            152.04393874767217,
+                            345.3522140148074
+                        ],
+                        "quadPoints": [
+                            71.69551583223566,
+                            345.3522140148074,
+                            152.04393874767217,
+                            345.3522140148074,
+                            71.69551583223566,
+                            325.5741406817769,
+                            152.04393874767217,
+                            325.5741406817769
+                        ],
+                        "strokeColor": "#008b02",
+                        "strokeWidth": 3,
+                        "type": "AdobeAnnoSelector"
+                    }
+                },
+                "creator": {
+                    "type": "Person",
+                    "name": "John Smith"
+                },
+                "created": "2020-04-03T14:56:54Z",
+                "modified": "2020-04-03T15:00:14Z"
+            },
+        ];
+
+        var viewerConfig = {
+            /* Enable commenting APIs */
+            enableAnnotationAPIs: true,  /* Default value is false */
+            /* Include existing PDF annotations and save new annotations to PDF buffer */
+            includePDFAnnotations: true  /* Default value is false */
+        };
+
+        /* Wait for Adobe Acrobat Services PDF Embed API to be ready */
+        document.addEventListener("adobe_dc_view_sdk.ready", function () {
+            /* Initialize the AdobeDC View object */
+            var adobeDCView = new AdobeDC.View({
+                /* Pass your registered client id */
+                clientId: client_id,
+                /* Pass the div id in which PDF should be rendered */
+                divId: "adobe-dc-view",
+            });
+
+            /* Invoke the file preview API on Adobe DC View object and return the Promise object */
+            var previewFilePromise = adobeDCView.previewFile({
+                /* Pass information on how to access the file */
+                content: {
+                    /* Location of file where it is hosted */
+                    location: {
+                        // url: "https://acrobatservices.adobe.com/view-sdk-demo/PDFs/Bodea Brochure.pdf",
+                        url: '{{ url_for("static", filename="test/extractPdfInput.pdf") }}',
+                        /*
+                        If the file URL requires some additional headers, then it can be passed as follows:-
+                        header: [
+                            {
+                                key: "<HEADER_KEY>",
+                                value: "<HEADER_VALUE>",
+                            }
+                        ]
+                        */
+                    },
+                },
+                /* Pass meta data of file */
+                metaData: {
+                    /* file name */
+                    fileName: "Bodea Brochure.pdf",
+                    /* file ID */
+                    id: "6d07d124-ac85-43b3-a867-36930f502ac6"
+                }
+            }, viewerConfig);
+
+            /* Use the annotation manager interface to invoke the commenting APIs*/
+            previewFilePromise.then(function (adobeViewer) {
+                adobeViewer.getAnnotationManager().then(function (annotationManager) {
+                    /* API to add annotations to PDF and return the updated PDF buffer */
+                    /* These APIs will work only when includePDFAnnotations is set to true in viewerConfig */
+                    // annotationManager.addAnnotationsInPDF(annotations)
+                    //     .then(function (result) {
+                    //         console.log("Annotations added to PDF successfully and updated PDF buffer returned.", result)
+                    //     })
+                    //     .catch(function (error) {
+                    //         console.log(error)
+                    //     });
+
+                    /* API to remove annotations from PDF and return the updated PDF buffer along with the list of annotations */
+                    // setTimeout(function () {
+                    //     annotationManager.removeAnnotationsFromPDF()
+                    //         .then(function (result) {
+                    //             console.log("Annotations removed from PDF successfully and updated PDF buffer and annotation list returned.", result)
+                    //         })
+                    //         .catch(function (error) {
+                    //             console.log(error)
+                    //         });
+                    // }, 3000);
+                });
+            });
+        });
+
+    </script>
+</head>
+
+<body style="margin: 0px">
+    <div id="adobe-dc-view"></div>
+    <script type="text/javascript" src="https://acrobatservices.adobe.com/view-sdk/viewer.js"></script>
+</body>
+
+</html>

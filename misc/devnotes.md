@@ -44,3 +44,9 @@ https://clemenssiebler.com/posts/using-langchain-and-chatgpt-turbo-with-azure-op
 https://developer.adobe.com/document-services/docs/overview/pdf-extract-api/gettingstarted/#tag/Split-PDF/operation/pdfoperations.splitpdf.jobstatus
   pdfservices-sdk==2.3.0
   The example code is in the following link:  https://github.com/adobe/pdfservices-python-sdk-samples
+
+
+## PDF Embed API
+### Use PDF Embed API
+On https://developer.adobe.com/, create a project, add the PDF Embed API, set the domain as reportlyzer.ai, and then adobe_annotations.html works.
+2023.10.14

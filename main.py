@@ -150,8 +150,9 @@ def view_project(project_id):
 
     for document in documents:
         # get the update_time from DocumentShare
-        document.update_time = DocumentShare.query.filter_by(
-            document_id=document.id).first().update_time
+        document.update_time = (
+            DocumentShare.query.filter_by(document_id=document.id).first().update_time
+        )
         document.update_time = document.update_time.strftime("%Y-%m-%d %H:%M")
 
     return render_template("project_detail.html", project=project, documents=documents)
@@ -198,7 +199,6 @@ def upload_file():
 
     project_id = request.form.get("project_id")
 
-
     return {"message": "Success"}
 
 
@@ -212,9 +212,14 @@ def add_url(project_id):
         # Create document
         title, extension = extract_title(url)
         create_date = datetime.datetime.now()
-        prop = {'url': url}
-        doc = DocumentORM(title=title, properties=prop, tags={},
-                          create_date=create_date, file_type=extension)
+        prop = {"url": url}
+        doc = DocumentORM(
+            title=title,
+            properties=prop,
+            tags={},
+            create_date=create_date,
+            file_type=extension,
+        )
 
         db.session.add(doc)
         db.session.commit()
@@ -268,5 +273,13 @@ def test():
     # return render_template("test.html")
     return render_template("pdf_viewer.html")
 
+
+@app.route("/adobe")
+def adobe():
+    # return render_template("test.html")
+    # return render_template("pdf_viewer.html")
+    return render_template("adobe_annotations.html")
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="reportlyzer.ai", port=5000)
