@@ -13,7 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
 from models import UserORM, RoleORM, RoleUsers, tools
-from app import db, app, login_manager
+from .App import db, app, login_manager
 from models.db_models import ProjectORM, DocumentORM, ProjectDocument, DocumentShare
 import re
 from urllib.parse import urlparse

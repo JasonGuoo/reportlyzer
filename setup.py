@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from datetime import datetime
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import app, db
+from .App import app, db
 from models import (
     UserORM,
     RoleORM,
